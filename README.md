@@ -1,4 +1,4 @@
- # Azure Logic Apps - Employee Onboarding Automation
+# Azure Logic App for Automated Employee Onboarding
 
 ## Overview
 
