@@ -26,11 +26,11 @@
                             },
                             "host": {
                                 "connection": {
-                                    "name": "@parameters('$connections')['azuread-1']['connectionId']"
+                                    "name": "@parameters('$connections')['azuread']['connectionId']"
                                 }
                             },
                             "method": "post",
-                            "path": "/v1.0/groups/@{encodeURIComponent('92d266e9-5f7b-430a-a1f7-791e8bcfd745')}/members/$ref"
+                            "path": "/v1.0/groups/{group-id-cloud-engineer}/members/$ref"
                         },
                         "type": "ApiConnection"
                     }
@@ -46,11 +46,11 @@
                                         },
                                         "host": {
                                             "connection": {
-                                                "name": "@parameters('$connections')['azuread-1']['connectionId']"
+                                                "name": "@parameters('$connections')['azuread']['connectionId']"
                                             }
                                         },
                                         "method": "post",
-                                        "path": "/v1.0/groups/@{encodeURIComponent('4cdac05e-5fa5-4095-b88e-142fe6c22b02')}/members/$ref"
+                                        "path": "/v1.0/groups/{group-id-data-analyst}/members/$ref"
                                     },
                                     "type": "ApiConnection"
                                 }
@@ -101,11 +101,11 @@
                             "password": "Password123!"
                         },
                         "surname": "@body('Parse_JSON')?['LastName']",
-                        "userPrincipalName": "@{concat(body('Parse_JSON')?['FirstName'], '.', body('Parse_JSON')?['LastName'], '@thepryme.onmicrosoft.com')}"
+                        "userPrincipalName": "@{concat(body('Parse_JSON')?['FirstName'], '.', body('Parse_JSON')?['LastName'], '@yourdomain.onmicrosoft.com')}"
                     },
                     "host": {
                         "connection": {
-                            "name": "@parameters('$connections')['azuread-1']['connectionId']"
+                            "name": "@parameters('$connections')['azuread']['connectionId']"
                         }
                     },
                     "method": "post",
@@ -123,7 +123,7 @@
                     "body": {
                         "properties": {
                             "principalId": "@{outputs('Create_user')['body/id']}",
-                            "roleDefinitionId": "/subscriptions/c7a1247c-833f-4b11-bdd4-e2c4685e21f4/providers/Microsoft.Authorization/roleDefinitions/ba92f5b4-2d11-453d-a403-e96b0029c9fe"
+                            "roleDefinitionId": "/subscriptions/{subscription-id}/providers/Microsoft.Authorization/roleDefinitions/{role-definition-id}"
                         }
                     },
                     "headers": {
@@ -131,7 +131,7 @@
                         "Content-Type": "application/json"
                     },
                     "method": "PUT",
-                    "uri": "@concat('https://management.azure.com/subscriptions/c7a1247c-833f-4b11-bdd4-e2c4685e21f4/resourceGroups/RG-OnboardingAutomation/providers/Microsoft.Authorization/roleAssignments/99515e79-a00c-4879-969f-8439500dd24c?api-version=2022-04-01')\n"
+                    "uri": "@concat('https://management.azure.com/subscriptions/{subscription-id}/resourceGroups/{resource-group-name}/providers/Microsoft.Authorization/roleAssignments/{role-assignment-id}?api-version=2022-04-01')\n"
                 },
                 "runAfter": {
                     "HTTP_GET_TOKEN": [
@@ -147,12 +147,12 @@
             },
             "HTTP_GET_TOKEN": {
                 "inputs": {
-                    "body": "grant_type=client_credentials&client_id=53f46a71-98c6-4e7e-9dd0-5051a46abaf4&client_secret=4q38Q~rRSZwgPlq5XlhgWG47iVmgAS5i8gHb-bCu&scope=https%3A%2F%2Fmanagement.azure.com%2F.default\n",
+                    "body": "grant_type=client_credentials&client_id={client-id}&client_secret={client-secret}&scope=https%3A%2F%2Fmanagement.azure.com%2F.default\n",
                     "headers": {
                         "Content-Type": "application/x-www-form-urlencoded"
                     },
                     "method": "POST",
-                    "uri": "@concat('https://login.microsoftonline.com/', '3a78e80a-465c-4d94-82dd-4ad838868d86', '/oauth2/v2.0/token')"
+                    "uri": "@concat('https://login.microsoftonline.com/', '{tenant-id}', '/oauth2/v2.0/token')"
                 },
                 "runAfter": {
                     "Condition_1": [
@@ -213,7 +213,7 @@
             "Send_an_email_(V2)": {
                 "inputs": {
                     "body": {
-                        "Body": "<p>Dear @{body('Parse_JSON')?['FirstName']} @{body('Parse_JSON')?['LastName']}<span>,\n\nWelcome to the company! Your account has been created and you have been assigned the necessary resources.\n\nUsername: </span>@{concat(body('Parse_JSON')?['FirstName'], '.', body('Parse_JSON')?['LastName'], '@thepryme.onmicrosoft.com')}<span>\nTemporary Password: Password123!\n\nPlease log in and change your password as soon as possible.\n\nBest regards,\nIT Team\n</span></p>",
+                        "Body": "<p>Dear @{body('Parse_JSON')?['FirstName']} @{body('Parse_JSON')?['LastName']}<span>,\n\nWelcome to the company! Your account has been created and you have been assigned the necessary resources.\n\nUsername: </span>@{concat(body('Parse_JSON')?['FirstName'], '.', body('Parse_JSON')?['LastName'], '@yourdomain.onmicrosoft.com')}<span>\nTemporary Password: Password123!\n\nPlease log in and change your password as soon as possible.\n\nBest regards,\nIT Team\n</span></p>",
                         "Importance": "Normal",
                         "Subject": "\"Welcome to the Company\"",
                         "To": "@triggerBody()?['From']"
@@ -287,14 +287,14 @@
         "$connections": {
             "value": {
                 "azuread-1": {
-                    "connectionId": "/subscriptions/c7a1247c-833f-4b11-bdd4-e2c4685e21f4/resourceGroups/RG-OnboardingAutomation/providers/Microsoft.Web/connections/azuread-1",
+                    "connectionId": "/subscriptions/{subscription-id}/resourceGroups/{resource-group-name}/providers/Microsoft.Web/connections/azuread-1",
                     "connectionName": "azuread-1",
-                    "id": "/subscriptions/c7a1247c-833f-4b11-bdd4-e2c4685e21f4/providers/Microsoft.Web/locations/eastus/managedApis/azuread"
+                    "id": "/subscriptions/{subscription-id}/providers/Microsoft.Web/locations/eastus/managedApis/azuread"
                 },
                 "outlook": {
-                    "connectionId": "/subscriptions/c7a1247c-833f-4b11-bdd4-e2c4685e21f4/resourceGroups/RG-OnboardingAutomation/providers/Microsoft.Web/connections/outlook",
+                    "connectionId": "/subscriptions/{subscription-id}/resourceGroups/{resource-group-name}/providers/Microsoft.Web/connections/outlook",
                     "connectionName": "outlook",
-                    "id": "/subscriptions/c7a1247c-833f-4b11-bdd4-e2c4685e21f4/providers/Microsoft.Web/locations/eastus/managedApis/outlook"
+                    "id": "/subscriptions/{subscription-id}/providers/Microsoft.Web/locations/eastus/managedApis/outlook"
                 }
             }
         }
