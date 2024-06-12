@@ -70,6 +70,33 @@ Email: john.doe@example.com
 Job Position: Cloud Engineer
 Department: IT
 ```
+## Configuration
+
+Before deploying this logic app, replace the following placeholders in the `logic-app-definition.json` file with the actual values from your Azure environment:
+
+- `{client-id}`
+- `{tenant-id}`
+- `{group-id-cloud-engineer}`
+- `{group-id-data-analyst}`
+- `{subscription-id}`
+- `{resource-group-name}`
+- `{client-secret}`
+
+## Challenges and Solutions
+
+1. **Parsing HTML Email Content:**
+   - **Challenge:** Azure Logic Apps read email content as HTML, making it difficult to parse plain text information.
+   - **Solution:** Use string manipulation functions to extract necessary details from the HTML content.
+
+2. **Authorization Issues:**
+   - **Challenge:** Facing "Authorization Denied" errors when attempting to add users to groups or assign roles.
+   - **Solution:** Ensure that the service principal used by the logic app has the necessary permissions, such as `Group.ReadWrite.All` and `Directory.ReadWrite.All`.
+
+3. **Role Assignment via HTTP Call:**
+   - **Challenge:** Configuring HTTP actions to assign roles and permissions.
+   - **Solution:** Use the `HTTP` action to get an OAuth token and make API calls to Azure Resource Manager (ARM).
+
+
 ## Acknowledgements
 
 - Project was inspired by [@madebygps](https://github.com/madebygps)
