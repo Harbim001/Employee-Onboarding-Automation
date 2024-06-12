@@ -1,0 +1,302 @@
+{
+    "definition": {
+        "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+        "actions": {
+            "Compose": {
+                "inputs": {
+                    "Department": "@{trim(replace(substring(variables('EmailBody'), add(indexOf(variables('EmailBody'), 'Department:') , 11), sub(length(variables('EmailBody')), add(indexOf(variables('EmailBody'), 'Department:') , 11))), '<br>', ''))}",
+                    "Email": "@{trim(replace(substring(variables('EmailBody'), add(indexOf(variables('EmailBody'), 'Email:') , 6), sub(indexOf(variables('EmailBody'), 'Job Position:'), add(indexOf(variables('EmailBody'), 'Email:') , 6))), '<br>', ''))}",
+                    "FirstName": "@{trim(replace(substring(variables('EmailBody'), add(indexOf(variables('EmailBody'), 'First Name:') , 12), sub(indexOf(variables('EmailBody'), 'Last Name:'), add(indexOf(variables('EmailBody'), 'First Name:') , 12))), '<br>', ''))}",
+                    "JobPosition": "@{trim(replace(substring(variables('EmailBody'), add(indexOf(variables('EmailBody'), 'Job Position:') , 13), sub(indexOf(variables('EmailBody'), 'Department:'), add(indexOf(variables('EmailBody'), 'Job Position:') , 13))), '<br>', ''))}",
+                    "LastName": "@{trim(replace(substring(variables('EmailBody'), add(indexOf(variables('EmailBody'), 'Last Name:') , 10), sub(indexOf(variables('EmailBody'), 'Email:'), add(indexOf(variables('EmailBody'), 'Last Name:') , 10))), '<br>', ''))}"
+                },
+                "runAfter": {
+                    "Initialize_variable": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "Compose"
+            },
+            "Condition_1": {
+                "actions": {
+                    "Add_user_to_Cloud_Engineers_group": {
+                        "inputs": {
+                            "body": {
+                                "@@odata.id": "@{outputs('Create_user')?['body/id']}"
+                            },
+                            "host": {
+                                "connection": {
+                                    "name": "@parameters('$connections')['azuread-1']['connectionId']"
+                                }
+                            },
+                            "method": "post",
+                            "path": "/v1.0/groups/@{encodeURIComponent('92d266e9-5f7b-430a-a1f7-791e8bcfd745')}/members/$ref"
+                        },
+                        "type": "ApiConnection"
+                    }
+                },
+                "else": {
+                    "actions": {
+                        "Condition_2": {
+                            "actions": {
+                                "Add_user_to__Data_Analysts_group_": {
+                                    "inputs": {
+                                        "body": {
+                                            "@@odata.id": "@{outputs('Create_user')?['body/id']}"
+                                        },
+                                        "host": {
+                                            "connection": {
+                                                "name": "@parameters('$connections')['azuread-1']['connectionId']"
+                                            }
+                                        },
+                                        "method": "post",
+                                        "path": "/v1.0/groups/@{encodeURIComponent('4cdac05e-5fa5-4095-b88e-142fe6c22b02')}/members/$ref"
+                                    },
+                                    "type": "ApiConnection"
+                                }
+                            },
+                            "else": {
+                                "actions": {}
+                            },
+                            "expression": {
+                                "and": [
+                                    {
+                                        "equals": [
+                                            "@body('Create_user')['jobTitle']",
+                                            "Data Analyst"
+                                        ]
+                                    }
+                                ]
+                            },
+                            "type": "If"
+                        }
+                    }
+                },
+                "expression": {
+                    "and": [
+                        {
+                            "equals": [
+                                "@body('Create_user')['jobTitle']",
+                                "Cloud Engineer"
+                            ]
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "Create_user": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "If"
+            },
+            "Create_user": {
+                "inputs": {
+                    "body": {
+                        "accountEnabled": true,
+                        "displayName": "@{body('Parse_JSON')?['FirstName']} @{body('Parse_JSON')?['LastName']}\n",
+                        "givenName": "@body('Parse_JSON')?['FirstName']",
+                        "jobTitle": "@body('Parse_JSON')?['JobPosition']",
+                        "mailNickname": "@{replace(replace(concat(substring(body('Parse_JSON')?['FirstName'], 0, 1), body('Parse_JSON')?['LastName']), ' ', ''), '<br>', '')}",
+                        "passwordProfile": {
+                            "password": "Password123!"
+                        },
+                        "surname": "@body('Parse_JSON')?['LastName']",
+                        "userPrincipalName": "@{concat(body('Parse_JSON')?['FirstName'], '.', body('Parse_JSON')?['LastName'], '@thepryme.onmicrosoft.com')}"
+                    },
+                    "host": {
+                        "connection": {
+                            "name": "@parameters('$connections')['azuread-1']['connectionId']"
+                        }
+                    },
+                    "method": "post",
+                    "path": "/v1.0/users"
+                },
+                "runAfter": {
+                    "Parse_JSON": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "ApiConnection"
+            },
+            "HTTP_CALL_ARM_API": {
+                "inputs": {
+                    "body": {
+                        "properties": {
+                            "principalId": "@{outputs('Create_user')['body/id']}",
+                            "roleDefinitionId": "/subscriptions/c7a1247c-833f-4b11-bdd4-e2c4685e21f4/providers/Microsoft.Authorization/roleDefinitions/ba92f5b4-2d11-453d-a403-e96b0029c9fe"
+                        }
+                    },
+                    "headers": {
+                        "Authorization": "@{concat('Bearer ', body('HTTP_GET_TOKEN')['access_token'])}",
+                        "Content-Type": "application/json"
+                    },
+                    "method": "PUT",
+                    "uri": "@concat('https://management.azure.com/subscriptions/c7a1247c-833f-4b11-bdd4-e2c4685e21f4/resourceGroups/RG-OnboardingAutomation/providers/Microsoft.Authorization/roleAssignments/99515e79-a00c-4879-969f-8439500dd24c?api-version=2022-04-01')\n"
+                },
+                "runAfter": {
+                    "HTTP_GET_TOKEN": [
+                        "Succeeded"
+                    ]
+                },
+                "runtimeConfiguration": {
+                    "contentTransfer": {
+                        "transferMode": "Chunked"
+                    }
+                },
+                "type": "Http"
+            },
+            "HTTP_GET_TOKEN": {
+                "inputs": {
+                    "body": "grant_type=client_credentials&client_id=53f46a71-98c6-4e7e-9dd0-5051a46abaf4&client_secret=4q38Q~rRSZwgPlq5XlhgWG47iVmgAS5i8gHb-bCu&scope=https%3A%2F%2Fmanagement.azure.com%2F.default\n",
+                    "headers": {
+                        "Content-Type": "application/x-www-form-urlencoded"
+                    },
+                    "method": "POST",
+                    "uri": "@concat('https://login.microsoftonline.com/', '3a78e80a-465c-4d94-82dd-4ad838868d86', '/oauth2/v2.0/token')"
+                },
+                "runAfter": {
+                    "Condition_1": [
+                        "Succeeded"
+                    ]
+                },
+                "runtimeConfiguration": {
+                    "contentTransfer": {
+                        "transferMode": "Chunked"
+                    }
+                },
+                "type": "Http"
+            },
+            "Initialize_variable": {
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "EmailBody",
+                            "type": "string",
+                            "value": "@triggerBody()?['Body']"
+                        }
+                    ]
+                },
+                "runAfter": {},
+                "type": "InitializeVariable"
+            },
+            "Parse_JSON": {
+                "inputs": {
+                    "content": "@outputs('Compose')",
+                    "schema": {
+                        "properties": {
+                            "Department": {
+                                "type": "string"
+                            },
+                            "Email": {
+                                "type": "string"
+                            },
+                            "FirstName": {
+                                "type": "string"
+                            },
+                            "JobPosition": {
+                                "type": "string"
+                            },
+                            "LastName": {
+                                "type": "string"
+                            }
+                        },
+                        "type": "object"
+                    }
+                },
+                "runAfter": {
+                    "Compose": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "ParseJson"
+            },
+            "Send_an_email_(V2)": {
+                "inputs": {
+                    "body": {
+                        "Body": "<p>Dear @{body('Parse_JSON')?['FirstName']} @{body('Parse_JSON')?['LastName']}<span>,\n\nWelcome to the company! Your account has been created and you have been assigned the necessary resources.\n\nUsername: </span>@{concat(body('Parse_JSON')?['FirstName'], '.', body('Parse_JSON')?['LastName'], '@thepryme.onmicrosoft.com')}<span>\nTemporary Password: Password123!\n\nPlease log in and change your password as soon as possible.\n\nBest regards,\nIT Team\n</span></p>",
+                        "Importance": "Normal",
+                        "Subject": "\"Welcome to the Company\"",
+                        "To": "@triggerBody()?['From']"
+                    },
+                    "host": {
+                        "connection": {
+                            "name": "@parameters('$connections')['outlook']['connectionId']"
+                        }
+                    },
+                    "method": "post",
+                    "path": "/v2/Mail"
+                },
+                "runAfter": {
+                    "HTTP_CALL_ARM_API": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "ApiConnection"
+            }
+        },
+        "contentVersion": "1.0.0.0",
+        "outputs": {},
+        "parameters": {
+            "$connections": {
+                "defaultValue": {},
+                "type": "Object"
+            }
+        },
+        "triggers": {
+            "When_a_new_email_arrives_(V2)": {
+                "inputs": {
+                    "fetch": {
+                        "method": "get",
+                        "pathTemplate": {
+                            "template": "/v2/Mail/OnNewEmail"
+                        },
+                        "queries": {
+                            "fetchOnlyWithAttachment": false,
+                            "folderPath": "Inbox",
+                            "importance": "Any",
+                            "includeAttachments": false,
+                            "subjectFilter": "New Hire"
+                        }
+                    },
+                    "host": {
+                        "connection": {
+                            "name": "@parameters('$connections')['outlook']['connectionId']"
+                        }
+                    },
+                    "subscribe": {
+                        "body": {
+                            "NotificationUrl": "@{listCallbackUrl()}"
+                        },
+                        "method": "post",
+                        "pathTemplate": {
+                            "template": "/MailSubscriptionPoke/$subscriptions"
+                        },
+                        "queries": {
+                            "fetchOnlyWithAttachment": false,
+                            "folderPath": "Inbox",
+                            "importance": "Any"
+                        }
+                    }
+                },
+                "splitOn": "@triggerBody()?['value']",
+                "type": "ApiConnectionNotification"
+            }
+        }
+    },
+    "parameters": {
+        "$connections": {
+            "value": {
+                "azuread-1": {
+                    "connectionId": "/subscriptions/c7a1247c-833f-4b11-bdd4-e2c4685e21f4/resourceGroups/RG-OnboardingAutomation/providers/Microsoft.Web/connections/azuread-1",
+                    "connectionName": "azuread-1",
+                    "id": "/subscriptions/c7a1247c-833f-4b11-bdd4-e2c4685e21f4/providers/Microsoft.Web/locations/eastus/managedApis/azuread"
+                },
+                "outlook": {
+                    "connectionId": "/subscriptions/c7a1247c-833f-4b11-bdd4-e2c4685e21f4/resourceGroups/RG-OnboardingAutomation/providers/Microsoft.Web/connections/outlook",
+                    "connectionName": "outlook",
+                    "id": "/subscriptions/c7a1247c-833f-4b11-bdd4-e2c4685e21f4/providers/Microsoft.Web/locations/eastus/managedApis/outlook"
+                }
+            }
+        }
+    }
+}
