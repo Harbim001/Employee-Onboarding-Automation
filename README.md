@@ -69,3 +69,8 @@ Last Name: Doe
 Email: john.doe@example.com
 Job Position: Cloud Engineer
 Department: IT
+```
+## Acknowledgements
+
+- Project was inspired by [@madebygps](https://github.com/madebygps)
+- [Original repository](https://github.com/madebygps/projects)
