@@ -96,6 +96,7 @@ Before deploying this logic app, replace the following placeholders in the `logi
    - **Challenge:** Configuring HTTP actions to assign roles and permissions.
    - **Solution:** Use the `HTTP` action to get an OAuth token and make API calls to Azure Resource Manager (ARM).
 
+[Full Project documentation](https://medium.com/@abimbolaibis/azure-administrator-project-1-automating-employee-onboarding-with-azure-logic-apps-5c0c7ac0cdfe)
 
 ## Acknowledgements
 
